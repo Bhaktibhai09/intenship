@@ -1,0 +1,332 @@
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Registration Form</title>
+            <style>
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+
+                body {
+                    font-family: Arial, sans-serif;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    min-height: 100vh;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    padding: 20px;
+                }
+
+                .container {
+                    background: white;
+                    padding: 40px;
+                    border-radius: 8px;
+                    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+                    width: 100%;
+                    max-width: 400px;
+                }
+
+                h1 {
+                    text-align: center;
+                    margin-bottom: 30px;
+                    color: #333;
+                    font-size: 28px;
+                }
+
+                .form-group {
+                    margin-bottom: 20px;
+                }
+
+                label {
+                    display: block;
+                    margin-bottom: 8px;
+                    color: #333;
+                    font-weight: 500;
+                    font-size: 14px;
+                }
+
+                input {
+                    width: 100%;
+                    padding: 12px;
+                    border: 2px solid #ddd;
+                    border-radius: 4px;
+                    font-size: 16px;
+                    transition: all 0.3s ease;
+                }
+
+                input:focus {
+                    outline: none;
+                    border-color: #667eea;
+                    box-shadow: 0 0 5px rgba(102, 126, 234, 0.2);
+                }
+
+                input.error {
+                    border-color: #e74c3c;
+                    background-color: #fadbd8;
+                }
+
+                input.success {
+                    border-color: #27ae60;
+                    background-color: #d5f4e6;
+                }
+
+                .error-message {
+                    color: #e74c3c;
+                    font-size: 13px;
+                    margin-top: 5px;
+                    display: none;
+                    min-height: 18px;
+                }
+
+                .error-message.show {
+                    display: block;
+                }
+
+                button {
+                    width: 100%;
+                    padding: 12px;
+                    background-color: #667eea;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    font-size: 16px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    transition: background-color 0.3s ease;
+                    margin-top: 10px;
+                }
+
+                button:hover:not(:disabled) {
+                    background-color: #5568d3;
+                }
+
+                button:disabled {
+                    background-color: #bdc3c7;
+                    cursor: not-allowed;
+                }
+
+                .success-message {
+                    background-color: #d5f4e6;
+                    color: #27ae60;
+                    padding: 15px;
+                    border-radius: 4px;
+                    margin-bottom: 20px;
+                    display: none;
+                    text-align: center;
+                    font-weight: bold;
+                }
+
+                .success-message.show {
+                    display: block;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>Registration</h1>
+                <div class="success-message" id="successMessage">Registration successful!</div>
+                
+                <form id="registrationForm" novalidate>
+                    <!-- Name Field -->
+                    <div class="form-group">
+                        <label for="name">Full Name</label>
+                        <input type="text" id="name" name="name" placeholder="Enter your full name">
+                        <div class="error-message" id="nameError"></div>
+                    </div>
+
+                    <!-- Email Field -->
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" placeholder="Enter your email">
+                        <div class="error-message" id="emailError"></div>
+                    </div>
+
+                    <!-- Password Field -->
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" placeholder="Enter your password">
+                        <div class="error-message" id="passwordError"></div>
+                    </div>
+
+                    <!-- Confirm Password Field -->
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password">
+                        <div class="error-message" id="confirmPasswordError"></div>
+                    </div>
+
+                    <button type="submit" id="submitBtn">Register</button>
+                </form>
+            </div>
+
+            <script>
+                const form = document.getElementById('registrationForm');
+                const nameInput = document.getElementById('name');
+                const emailInput = document.getElementById('email');
+                const passwordInput = document.getElementById('password');
+                const confirmPasswordInput = document.getElementById('confirmPassword');
+                const submitBtn = document.getElementById('submitBtn');
+                const successMessage = document.getElementById('successMessage');
+
+                // Validation state object
+                const validationState = {
+                    name: false,
+                    email: false,
+                    password: false,
+                    confirmPassword: false
+                };
+
+                // Reusable validation function
+                function validateField(fieldName, value, rules) {
+                    const errorElement = document.getElementById(`${fieldName}Error`);
+                    const inputElement = document.getElementById(fieldName);
+
+                    if (rules.isEmpty && value.trim() === '') {
+                        showError(fieldName, rules.emptyMessage);
+                        return false;
+                    }
+
+                    if (rules.minLength && value.length < rules.minLength) {
+                        showError(fieldName, rules.minLengthMessage);
+                        return false;
+                    }
+
+                    if (rules.regex && !rules.regex.test(value)) {
+                        showError(fieldName, rules.regexMessage);
+                        return false;
+                    }
+
+                    if (rules.customValidation && !rules.customValidation()) {
+                        showError(fieldName, rules.customMessage);
+                        return false;
+                    }
+
+                    clearError(fieldName);
+                    return true;
+                }
+
+                // Show error message
+                function showError(fieldName, message) {
+                    const errorElement = document.getElementById(`${fieldName}Error`);
+                    const inputElement = document.getElementById(fieldName);
+                    errorElement.textContent = message;
+                    errorElement.classList.add('show');
+                    inputElement.classList.remove('success');
+                    inputElement.classList.add('error');
+                    validationState[fieldName] = false;
+                }
+
+                // Clear error message
+                function clearError(fieldName) {
+                    const errorElement = document.getElementById(`${fieldName}Error`);
+                    const inputElement = document.getElementById(fieldName);
+                    errorElement.textContent = '';
+                    errorElement.classList.remove('show');
+                    inputElement.classList.remove('error');
+                    inputElement.classList.add('success');
+                    validationState[fieldName] = true;
+                }
+
+                // Validation rules for each field
+                const validationRules = {
+                    name: {
+                        isEmpty: true,
+                        emptyMessage: 'Name is required',
+                        minLength: 2,
+                        minLengthMessage: 'Name must be at least 2 characters',
+                        regex: /^[a-zA-Z\s]+$/,
+                        regexMessage: 'Name can only contain letters and spaces'
+                    },
+                    email: {
+                        isEmpty: true,
+                        emptyMessage: 'Email is required',
+                        regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                        regexMessage: 'Please enter a valid email address'
+                    },
+                    password: {
+                        isEmpty: true,
+                        emptyMessage: 'Password is required',
+                        minLength: 8,
+                        minLengthMessage: 'Password must be at least 8 characters',
+                        regex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[a-zA-Z\d@$!%*?&]/,
+                        regexMessage: 'Password must contain uppercase, lowercase, number, and special character'
+                    },
+                    confirmPassword: {
+                        isEmpty: true,
+                        emptyMessage: 'Please confirm your password',
+                        customValidation: () => confirmPasswordInput.value === passwordInput.value,
+                        customMessage: 'Passwords do not match'
+                    }
+                };
+
+                // Add event listeners for real-time validation
+                nameInput.addEventListener('blur', () => {
+                    validateField('name', nameInput.value, validationRules.name);
+                });
+
+                nameInput.addEventListener('keyup', () => {
+                    validateField('name', nameInput.value, validationRules.name);
+                });
+
+                emailInput.addEventListener('blur', () => {
+                    validateField('email', emailInput.value, validationRules.email);
+                });
+
+                emailInput.addEventListener('keyup', () => {
+                    validateField('email', emailInput.value, validationRules.email);
+                });
+
+                passwordInput.addEventListener('blur', () => {
+                    validateField('password', passwordInput.value, validationRules.password);
+                });
+
+                passwordInput.addEventListener('keyup', () => {
+                    validateField('password', passwordInput.value, validationRules.password);
+                    // Re-validate confirm password if it has a value
+                    if (confirmPasswordInput.value) {
+                        validateField('confirmPassword', confirmPasswordInput.value, validationRules.confirmPassword);
+                    }
+                });
+
+                confirmPasswordInput.addEventListener('blur', () => {
+                    validateField('confirmPassword', confirmPasswordInput.value, validationRules.confirmPassword);
+                });
+
+                confirmPasswordInput.addEventListener('keyup', () => {
+                    validateField('confirmPassword', confirmPasswordInput.value, validationRules.confirmPassword);
+                });
+
+                // Form submission
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+
+                    // Validate all fields
+                    validateField('name', nameInput.value, validationRules.name);
+                    validateField('email', emailInput.value, validationRules.email);
+                    validateField('password', passwordInput.value, validationRules.password);
+                    validateField('confirmPassword', confirmPasswordInput.value, validationRules.confirmPassword);
+
+                    // Check if all validations passed
+                    if (Object.values(validationState).every(val => val === true)) {
+                        successMessage.classList.add('show');
+                        form.reset();
+                        
+                        // Reset validation state
+                        Object.keys(validationState).forEach(key => {
+                            validationState[key] = false;
+                            document.getElementById(key).classList.remove('success', 'error');
+                        });
+
+                        // Hide success message after 3 seconds
+                        setTimeout(() => {
+                            successMessage.classList.remove('show');
+                        }, 3000);
+                    }
+                });
+            </script>
+        </body>
+        </html>
